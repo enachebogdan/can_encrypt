@@ -44,6 +44,7 @@
 #include <linux/if_packet.h>
 #include <linux/if_ether.h>
 #include <linux/can.h>
+#include <errno.h>
 
 #include "include/nodes/controller.c"
 
@@ -61,10 +62,10 @@ void create_car() {
 int start_virtualcar() {
 
     int s;                              /* socket */
-    struct can_frame frame;             /* frame  */
+    struct canfd_frame frame;             /* frame  */
     int size, i;                        /* data size */
     static struct ifreq ifr;            /* ifr as an instance*/
-    static struct sockaddr_ll sl;       /* prefs */
+    struct sockaddr_can sl;       /* prefs */
     char *instance = "virtualcar";      /* our virtual device */
     int ifindex;                        /* car socket # */
     char current[8];                    /* current operation received */
@@ -73,12 +74,26 @@ int start_virtualcar() {
     /** Bring up main controller and gateway */
     create_car();
 
-    s = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_CAN));
+
+    printf("_____ Set Sock Opt error is %d\n", errno);
+
+    s = socket(PF_CAN, SOCK_RAW, CAN_RAW);
     if (s < 0) {
         // Can't connect to socket?!
+        printf("_____ Could it be a socket error?");
         perror("socket");
         //return 1;
     }
+    
+    int enable_sockopt = 1;
+    int err = setsockopt(s, SOL_CAN_RAW, CAN_RAW_FD_FRAMES, &enable_sockopt, sizeof(enable_sockopt));
+
+
+    // LINUX
+    struct timeval tv;
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
+    setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 
     if (strcmp(instance, "any") == 0)
         ifindex = 0; // Debug; listen to index 0
@@ -88,24 +103,38 @@ int start_virtualcar() {
         ifindex = ifr.ifr_ifindex;
     }
 
-    sl.sll_family = AF_PACKET;
-    sl.sll_ifindex = ifindex;
-    sl.sll_protocol = htons(ETH_P_CAN);
 
-    if (bind(s, (struct sockaddr *) &sl, sizeof(sl)) < 0) {
+    strncpy(ifr.ifr_name, VIRTUALCAR, IFNAMSIZ - 1);
+    ifr.ifr_name[IFNAMSIZ - 1] = '\0';
+    ifr.ifr_ifindex = if_nametoindex(ifr.ifr_name);
+
+
+    sl.can_family = AF_CAN;
+    sl.can_ifindex = ifr.ifr_ifindex;
+
+    //sl.sll_family = AF_PACKET;
+    //sl.sll_ifindex = ifindex;
+    //sl.sll_protocol = htons(ETH_P_CAN);
+
+    if (err = bind(s, (struct sockaddr_can *) &sl, sizeof(sl)) < 0) {
+        printf("_____ Could it be a bind error? sizeof(sl)=%d,  error = %d",sizeof(sl), errno);
         ("bind"); // please avoid!
         return 1;
     }
 
     while (1) {
 
-        if ((size = read(s, &frame, sizeof(struct can_frame))) < 0) {
-            // invalid frame
-            perror("read");
+        size = read(s, &frame, 2*sizeof(struct canfd_frame));
+
+
+        if (size < 0) {
+            printf("\n Invalid frame with error :%d!\n", errno);
+            fflush(stdout);
             return 1;
-        } else if (size < sizeof(struct can_frame)) {
+        } else if (size < sizeof(struct canfd_frame)) {
             // invalid frame
-            fprintf(stderr, "CAN frame is wrong! Are you trying to hack me?!\n");
+            printf("\nCAN frame is wrong! Are you trying to hack me?!\n");
+            fflush(stdout);
             return 1;
         } else {
             printf("\n_____ going in\n");
@@ -117,5 +146,7 @@ int start_virtualcar() {
 
             fflush(stdout);
         } 
+
+        fflush(stdout);
     } 
 }

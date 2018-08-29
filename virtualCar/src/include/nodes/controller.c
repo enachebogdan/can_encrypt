@@ -65,9 +65,9 @@ static void hex_to_str(uint8_t* str, char* output)
 {
 //	output = "";
     unsigned char i;
-    for (i = 0; i < 8; ++i)
+    for (i = 0; i < strlen(str); ++i)
     {
-        printf("[%.2x] ", str[i]);
+        //printf("[%.2x] ", str[i]);
         sprintf(output + 2 * i,"%.2x", str[i]);
     }    
     printf("\n");
@@ -76,16 +76,6 @@ static void hex_to_str(uint8_t* str, char* output)
 void can_accept_signal(struct can_frame *frame)
 {
 
-/*
-hex_to_str(unencrypted_messages[0], z);
-printf("after I've converted it: %s\n", z);
-
-hex_to_str(unencrypted_messages[1], z);
-printf("after I've converted it: %s\n", z);
-
-hex_to_str(unencrypted_messages[2], z);
-printf("after I've converted it: %s\n", z);
-*/
 	uint8_t i;
 	printf("___________________ New frame recieved ...");
 
@@ -96,15 +86,15 @@ printf("after I've converted it: %s\n", z);
 		char received[50];
 		char string_unencrypted_message[50];
 		hex_to_str(frame->data, received);
-//		printf("\n_____ THIS IS WHAT WE RECEIVED: %s \n", &received);
+		printf("\n_____ THIS IS WHAT WE RECEIVED: %s \n", &received);
 		uint8_t unencr_messages_count = sizeof(unencrypted_messages)/sizeof(unencrypted_messages[0]);
 		printf("\n ___________ WE HAVE [%d] known unencrypted_messages\n", unencr_messages_count);
 
 		for(i = 0; i < unencr_messages_count; ++i)
 		{
-			printf("\n Now I am going to convert one of the unencr to string [%d] \n", i);
+			//printf("\n Now I am going to convert one of the unencr to string [%d] \n", i);
 			hex_to_str(unencrypted_messages[i], string_unencrypted_message);
-			printf("\n OBTAINED UNENCR MESSAGE IS: %s\n" , string_unencrypted_message);
+			//printf("\n OBTAINED UNENCR MESSAGE IS: %s\n" , string_unencrypted_message);
 			if(strcmp(received, string_unencrypted_message) == 0)  // we have a match
 			{
 				printf("!!!! BINGOOOO!!!!!!!!");

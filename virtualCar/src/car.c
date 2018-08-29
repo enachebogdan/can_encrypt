@@ -59,6 +59,9 @@ int can_gateway_check_mtu(struct ifreq *ifr)
 
 int send_can_frame(char *sframe)
 {
+
+	printf("***** send_can_frame line 63 \n");
+
 	int s; /* can raw socket */
 	struct ifreq ifr;
 	struct sockaddr_can addr;

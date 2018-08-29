@@ -27,16 +27,14 @@ pthread_t vcar;
 
 void send_unencrypted_data(char* data)
 {
-    char cangen_command[100] = "cangen virtualcar -v -L 8 -n 1 -I 00B -D ";
+    char cangen_command[100] = "cangen virtualcar -vvvv -L 12 -n 1 -f -I 00B -D ";
     
-    if(16 == strlen(data))
-    {
+//    if(16 == strlen(data))
+//    {
         strcat(cangen_command, data);
         printf("!!!!!!! WE ARE RUNNING THIS COMMAND: %s \n", cangen_command);
         system(cangen_command);
-    }
-
-    printf("_________ IMPOSIBLE");
+//    }
 }
 
 int main()
@@ -53,10 +51,11 @@ int main()
         sleep(1);
     }
 
+    uint8_t test_long_message[] = { 0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96,0x9f,0x9f,0x9f,0x9f};
     char string_data[50];
-    hex_to_str(car_open, string_data);
+    hex_to_str(test_long_message, string_data);
 
-    printf("\n\n ZZZZZZZZZZZZZ %s \n\n", string_data);
+//    printf("\n\n ZZZZZZZZZZZZZ %s \n\n", string_data);
 
     printf(" Sending some stuff!!! \n");   
 
