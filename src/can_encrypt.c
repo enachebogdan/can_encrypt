@@ -16,10 +16,6 @@
 static void encrypt_ecb();
 static void decrypt_ecb();
 
-//static const uint8_t car_open[] = { 0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96, 0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93, 0x17, 0x2a };
-//static const uint8_t car_open[] = { 0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96,};// 0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93, 0x17, 0x2a };
-
-
 #define ENCRYPT 0
 
 pthread_t vcar;
@@ -27,14 +23,9 @@ pthread_t vcar;
 
 void send_unencrypted_data(char* data)
 {
-    char cangen_command[100] = "cangen virtualcar -vvvv -L 12 -n 1 -f -I 00B -D ";
-    
-//    if(16 == strlen(data))
-//    {
-        strcat(cangen_command, data);
-        printf("!!!!!!! WE ARE RUNNING THIS COMMAND: %s \n", cangen_command);
-        system(cangen_command);
-//    }
+    char cangen_command[100] = "cangen virtualcar -vvvv -L 16 -n 1 -f -I 00B -D ";
+    strcat(cangen_command, data);
+    system(cangen_command);
 }
 
 int main()
@@ -51,43 +42,39 @@ int main()
         sleep(1);
     }
 
-    uint8_t test_long_message[] = { 0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96,0x9f,0x9f,0x9f,0x9f};
-    char string_data[50];
-    hex_to_str(test_long_message, string_data);
+    char string_data[16];
+    uint8_t unecr_1[] = { 0x1f, 0x35, 0x2c, 0x07, 0x3b, 0x61, 0x08, 0xd7, 0x2d, 0x98, 0x10, 0xa3, 0x09, 0x14, 0xdf, 0xf4 };
+    hex_to_str(unecr_1, string_data);
 
-//    printf("\n\n ZZZZZZZZZZZZZ %s \n\n", string_data);
-
-    printf(" Sending some stuff!!! \n");   
-
+    printf("\n.................................................................................\n");
+    printf(" Test nr 1: Sending unencrypted message:%s \n", string_data);   
     send_unencrypted_data(string_data);
+    getchar();
+
+    printf("\n.................................................................................\n");
+    hex_to_str(unencrypted_messages[0], string_data);
+    printf(" Test nr 2: Sending unencrypted message:%s \n", string_data);
+    send_unencrypted_data(string_data);
+    getchar();
+
+
+    printf("\n.................................................................................\n");
+    printf(" Test nr 3: Sending encrypted message\n");
+    uint8_t in[16];
+    memcpy(in, unencrypted_messages[3], 16);
+    encrypt_ecb(in);
+    hex_to_str(in, string_data);
+    printf("The string after encrypting it. We send it to CAN: %s\n", string_data);
+    send_unencrypted_data(string_data);
+
     pthread_join(vcar, NULL);
-    
-//	encrypt_ecb();
-//	return 0;
+
 }
 
-
-
-
-
-static void encrypt_ecb()
+static void encrypt_ecb(uint8_t* in)
 {
-	uint8_t key[] = { 0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c };
-    uint8_t out[] = { 0x3a, 0xd7, 0x7b, 0xb4, 0x0d, 0x7a, 0x36, 0x60, 0xa8, 0x9e, 0xca, 0xf3, 0x24, 0x66, 0xef, 0x97 };
-    uint8_t in[]  = { 0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96, 0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93, 0x17, 0x2a };
     struct AES_ctx ctx;
 
     AES_init_ctx(&ctx, key);
     AES_ECB_encrypt(&ctx, in);
-
-    printf("ECB encrypt: ");
-
-    if (0 == memcmp((char*) out, (char*) in, 16))
-    {
-        printf("SUCCESS!\n");
-    }
-    else
-    {
-        printf("FAILURE!\n");
-    }
 }

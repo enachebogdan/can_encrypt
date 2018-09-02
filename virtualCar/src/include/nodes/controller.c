@@ -55,52 +55,73 @@
  
 struct can_frame *current;
 
-void can_send_signal(struct can_frame *frame)
+static void decrypt_ecb(uint8_t* in)
 {
-	
+    struct AES_ctx ctx;
+    
+    AES_init_ctx(&ctx, key);
+    AES_ECB_decrypt(&ctx, in);
 }
 
 // prints string as hex
-static void hex_to_str(uint8_t* str, char* output)
+static void hex_to_str(const uint8_t* str, char* output)
 {
-//	output = "";
-    unsigned char i;
-    for (i = 0; i < strlen(str); ++i)
+    uint8_t i;
+    for (i = 0; i < 16; ++i)
     {
         //printf("[%.2x] ", str[i]);
         sprintf(output + 2 * i,"%.2x", str[i]);
-    }    
-    printf("\n");
+    }
+    //printf("\n");
 }
 
 void can_accept_signal(struct can_frame *frame)
 {
 
 	uint8_t i;
-	printf("___________________ New frame recieved ...");
+	char received[50];
+	char string_unencrypted_message[50];
+	hex_to_str(frame->data, received);
+	printf("CAN socket received the following message: %s\n", received);
+	uint8_t unencr_messages_count = sizeof(unencrypted_messages)/sizeof(unencrypted_messages[0]);
+	uint8_t found = 0;
 
-	printf("\ncan_id = %x\n", frame->can_id);
+	uint8_t decrypted[50];
+	memcpy(decrypted, frame->data, 16);
+	decrypt_ecb(decrypted);
+	char decrypted_str[50];
+	hex_to_str(decrypted, decrypted_str);
+	printf("The string after we decrypted it: %s\n", decrypted_str);
 
-	printf("\n  We are going to compare the values now \n");
+	for(i = 0; i < unencr_messages_count; ++i)
 	{
-		char received[50];
-		char string_unencrypted_message[50];
-		hex_to_str(frame->data, received);
-		printf("\n_____ THIS IS WHAT WE RECEIVED: %s \n", &received);
-		uint8_t unencr_messages_count = sizeof(unencrypted_messages)/sizeof(unencrypted_messages[0]);
-		printf("\n ___________ WE HAVE [%d] known unencrypted_messages\n", unencr_messages_count);
-
-		for(i = 0; i < unencr_messages_count; ++i)
+		hex_to_str(unencrypted_messages[i], string_unencrypted_message);
+		if(strcmp(received, string_unencrypted_message) == 0 ||  // we have a match in an unencrypted message
+			strcmp(decrypted_str, string_unencrypted_message) == 0 )  // we have a match in an encrypted message	
 		{
-			//printf("\n Now I am going to convert one of the unencr to string [%d] \n", i);
-			hex_to_str(unencrypted_messages[i], string_unencrypted_message);
-			//printf("\n OBTAINED UNENCR MESSAGE IS: %s\n" , string_unencrypted_message);
-			if(strcmp(received, string_unencrypted_message) == 0)  // we have a match
+			printf("We have received the following CAN command: ");
+			switch(i)
 			{
-				printf("!!!! BINGOOOO!!!!!!!!");
+			case 0:
+				printf("ENGINE ON\n");
+				break;
+			case 1:
+				printf("ENGINE OFF\n");
+				break;
+			case 2:
+				printf("DOOR OPEN\n");
+				break;
+			case 3:
+				printf("TURN ON CD PLAYER\n");
+				break;
 			}
+			found = 1;
+			break;
 		}
-//		
+	}
+	if(!found)
+	{
+		printf("The received message does not mean anything, it will be ignored.\n");
 	}
 
 	printf("\n");

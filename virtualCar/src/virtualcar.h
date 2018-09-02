@@ -74,15 +74,10 @@ int start_virtualcar() {
     /** Bring up main controller and gateway */
     create_car();
 
-
-    printf("_____ Set Sock Opt error is %d\n", errno);
-
     s = socket(PF_CAN, SOCK_RAW, CAN_RAW);
     if (s < 0) {
-        // Can't connect to socket?!
-        printf("_____ Could it be a socket error?");
         perror("socket");
-        //return 1;
+        return 1;
     }
     
     int enable_sockopt = 1;
@@ -93,7 +88,7 @@ int start_virtualcar() {
     struct timeval tv;
     tv.tv_sec = 1;
     tv.tv_usec = 0;
-    setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+    //setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 
     if (strcmp(instance, "any") == 0)
         ifindex = 0; // Debug; listen to index 0
@@ -112,41 +107,30 @@ int start_virtualcar() {
     sl.can_family = AF_CAN;
     sl.can_ifindex = ifr.ifr_ifindex;
 
-    //sl.sll_family = AF_PACKET;
-    //sl.sll_ifindex = ifindex;
-    //sl.sll_protocol = htons(ETH_P_CAN);
-
     if (err = bind(s, (struct sockaddr_can *) &sl, sizeof(sl)) < 0) {
-        printf("_____ Could it be a bind error? sizeof(sl)=%d,  error = %d",sizeof(sl), errno);
         ("bind"); // please avoid!
         return 1;
     }
 
     while (1) {
-
-        size = read(s, &frame, 2*sizeof(struct canfd_frame));
+        size = read(s, &frame, sizeof(struct canfd_frame));
 
 
         if (size < 0) {
             printf("\n Invalid frame with error :%d!\n", errno);
-            fflush(stdout);
-            return 1;
+            perror("read");
+            sleep(1);
+            continue;
+
         } else if (size < sizeof(struct canfd_frame)) {
-            // invalid frame
             printf("\nCAN frame is wrong! Are you trying to hack me?!\n");
-            fflush(stdout);
             return 1;
         } else {
-            printf("\n_____ going in\n");
             if (frame.can_id & CAN_EFF_FLAG)
                 printf("%8X  ", frame.can_id & CAN_EFF_MASK); // 8 bytes
             can_accept_signal(&frame);
             if (frame.can_id & CAN_RTR_FLAG)
                 printf("%8X  ", frame.can_id & CAN_EFF_MASK); // 8 bytes
-
-            fflush(stdout);
         } 
-
-        fflush(stdout);
     } 
 }
