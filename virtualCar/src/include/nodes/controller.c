@@ -54,6 +54,44 @@
 #include "pump.h"
  
 struct can_frame *current;
+struct car_state 
+{
+	uint8_t ENGINE;
+	uint8_t DOORS;
+	uint8_t PLAYER;
+	uint8_t LIGHTS;
+
+} CAR;
+
+void init_car_state(struct car_state *car)
+{
+	car->ENGINE = 1;
+	car->DOORS  = 0;
+	car->PLAYER = 0;
+	car->LIGHTS = 0;
+}
+
+void print_car_state(struct car_state *car)
+{
+	if(car->ENGINE)
+		printf("CAR ENGINE IS ON\n");
+	else
+		printf("CAR ENGINE IS OFF\n");
+	if(car->DOORS)
+		printf("CAR DOORS ARE OPENED\n");
+	else
+		printf("CAR DOORS ARE CLOSED\n");
+	if(car->PLAYER)
+		printf("CD PLAYER IS ON\n");
+	else
+		printf("CD PLAYER IS OFF\n");
+	if(car->LIGHTS)
+		printf("CAR LIGHTS ARE ON\n");
+	else
+		printf("CAR LIGHTS ARE OFF\n");
+
+	car->LIGHTS = 0;
+}
 
 static void decrypt_ecb(uint8_t* in)
 {
@@ -64,7 +102,7 @@ static void decrypt_ecb(uint8_t* in)
 }
 
 // prints string as hex
-static void hex_to_str(const uint8_t* str, char* output)
+void hex_to_str(const uint8_t* str, char* output)
 {
     uint8_t i;
     for (i = 0; i < 16; ++i)
@@ -104,15 +142,35 @@ void can_accept_signal(struct can_frame *frame)
 			{
 			case 0:
 				printf("ENGINE ON\n");
+				CAR.ENGINE = 1;
 				break;
 			case 1:
 				printf("ENGINE OFF\n");
+				CAR.ENGINE = 0;
 				break;
 			case 2:
 				printf("DOOR OPEN\n");
+				CAR.DOORS = 1;
 				break;
 			case 3:
+				CAR.DOORS = 0;
+				printf("DOOR CLOSE\n");
+				break;
+			case 4:
+				CAR.PLAYER = 1;
 				printf("TURN ON CD PLAYER\n");
+				break;
+			case 5:
+				CAR.PLAYER = 0;
+				printf("TURN OFF CD PLAYER\n");
+				break;
+			case 6:
+				CAR.LIGHTS = 1;
+				printf("TURN ON LIGHTS\n");
+				break;
+			case 7:
+				CAR.LIGHTS = 1;
+				printf("TURN OFF LIGHTS\n");
 				break;
 			}
 			found = 1;

@@ -57,6 +57,8 @@ void create_car() {
     system("modprobe vcan");
     system("sudo ip link add dev virtualcar type vcan");
     system("sudo ip link set up virtualcar");
+    init_car_state(&CAR);
+    print_car_state(&CAR);
 }
 
 int start_virtualcar() {
@@ -112,7 +114,7 @@ int start_virtualcar() {
         return 1;
     }
 
-    while (1) {
+    while (CAR.ENGINE) {
         size = read(s, &frame, sizeof(struct canfd_frame));
 
 
@@ -133,4 +135,9 @@ int start_virtualcar() {
                 printf("%8X  ", frame.can_id & CAN_EFF_MASK); // 8 bytes
         } 
     } 
+
+    sleep(1);
+    system("sudo ip link delete virtualcar");
+    printf("THE ENGINE IS STOPPED, NO LONGER LISTENING TO COMMANDS. BYE!\n");
+    return 0;
 }

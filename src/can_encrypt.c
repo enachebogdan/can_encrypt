@@ -55,17 +55,52 @@ int main()
     hex_to_str(unencrypted_messages[0], string_data);
     printf(" Test nr 2: Sending unencrypted message:%s \n", string_data);
     send_unencrypted_data(string_data);
+    print_car_state(&CAR);
     getchar();
 
 
     printf("\n.................................................................................\n");
     printf(" Test nr 3: Sending encrypted message\n");
     uint8_t in[16];
-    memcpy(in, unencrypted_messages[3], 16);
+    memcpy(in, unencrypted_messages[2], 16);
     encrypt_ecb(in);
     hex_to_str(in, string_data);
     printf("The string after encrypting it. We send it to CAN: %s\n", string_data);
     send_unencrypted_data(string_data);
+    print_car_state(&CAR);
+    getchar();
+
+
+    printf("\n.................................................................................\n");
+    printf(" Test nr 4: Sending encrypted message\n");
+    //uint8_t in[16];
+    memcpy(in, unencrypted_messages[4], 16);
+    encrypt_ecb(in);
+    hex_to_str(in, string_data);
+    printf("The string after encrypting it. We send it to CAN: %s\n", string_data);
+    send_unencrypted_data(string_data);
+    print_car_state(&CAR);
+    getchar();
+
+    printf("\n.................................................................................\n");
+    printf(" Test nr 5: Sending encrypted message\n");
+    memcpy(in, unencrypted_messages[5], 16);
+    encrypt_ecb(in);
+    hex_to_str(in, string_data);
+    printf("The string after encrypting it. We send it to CAN: %s\n", string_data);
+    send_unencrypted_data(string_data);
+    print_car_state(&CAR);
+    getchar();
+
+    printf("\n.................................................................................\n");
+    printf(" Test nr 6: Sending encrypted message\n");
+    memcpy(in, unencrypted_messages[1], 16);
+    encrypt_ecb(in);
+    hex_to_str(in, string_data);
+    printf("The string after encrypting it. We send it to CAN: %s\n", string_data);
+    send_unencrypted_data(string_data);
+    print_car_state(&CAR);
+
 
     pthread_join(vcar, NULL);
 
